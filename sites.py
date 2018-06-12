@@ -1,0 +1,54 @@
+#!/usr/bin/env python
+import requests
+import logging
+import retrying
+from exceptions import EmptyListException, ListNotMatchException
+from proxy_atom import ProxyAtom
+
+logger = logging.getLogger(__name__)
+
+class Site(object):
+    def __init__(self, storage, target_url, ip_parttern, port_pattern, page_total = 5, headers = {}):
+        super(Site, self).__init__()
+        self._storage = storage
+        self._target_url = target_url
+        self._ip_parttern = ip_parttern
+        self._port_pattern = port_pattern
+        self._page_total = page_total
+        self._headers = headers
+        
+    def parser(self, ip_list_raw, port_list_raw):
+        return ip_list_raw, port_list_raw
+
+    @retrying.retry(stop_max_attempt_number=3)
+    def fetch_proxies(self, page_num = None):
+        try:
+            url = self._target_url.format(page=page_num) if page_num else self._target_url
+            text = self._get_content(url, self._headers)
+            ip_list_raw = self._ip_parttern.findall(text)
+            port_list_raw = self._port_pattern.findall(text)
+
+            if not len(ip_list_raw) or not len(port_list_raw):
+                raise EmptyListException()
+
+            if len(ip_list_raw) != len(port_list_raw):
+                raise ListNotMatchException()
+
+        except Exception as e:
+            logger.error("Request error: {}".format(e))
+            return ProxyAtom([], [])
+
+        ip_list, port_list =self.parser(ip_list_raw, port_list_raw)
+        return ProxyAtom(ip_list, port_list)
+
+    def _get_content(self, url, headers):
+        response = requests.get(url, timeout=5, headers=headers)
+        logger.info("response status code: {} {}".format(url, response.status_code))
+        return response.text
+
+    def collect(self):
+        for page in range(1, self._page_total):
+            atoms = self.fetch_proxies(page)
+            logger.info("collect new: {}".format(len(atoms.items)))
+            if atoms.items:
+                self._storage.update(atoms.items)
