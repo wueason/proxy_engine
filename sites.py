@@ -49,6 +49,19 @@ class Site(object):
     def collect(self):
         for page in range(1, self._page_total):
             atoms = self.fetch_proxies(page)
-            logger.info("collect new: {}".format(len(atoms.items)))
-            if atoms.items:
-                self._storage.update(atoms.items)
+            for item in atoms.items:
+                if self._validate(item):
+                    self._storage.insert(item)
+                    logger.info("item: ## {}".format(item))
+
+    def _validate(self, proxy_raw):
+        check_url = 'https://www.baidu.com'
+        try:
+            r=requests.get(check_url, proxies={'http': proxy_raw,
+                'https': proxy_raw}, headers=self._headers, timeout=5)
+            logger.info("StatusCode: ## {} ## {}".format(proxy_raw, r.status_code))
+            if r.status_code == 200:
+                return True
+            return False
+        except Exception as e:
+            logger.error("Error: ## {} ## {}".format(proxy_raw, e))

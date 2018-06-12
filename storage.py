@@ -49,7 +49,6 @@ class LocalStorage(Storage):
             data.update(items)
             pickle.dump(data,open(self.file,"wb"))
         except Exception as e:
-            print(e)
             return False
         return True
 
