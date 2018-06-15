@@ -1,0 +1,3 @@
+TEST_URI = 'http://www.baidu.com'
+INTERVAL = 900
+VALIDATE_INTERVAL = 500

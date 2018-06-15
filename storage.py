@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import os
+import sys
+import platform
 import random
 try:
     import cPickle as pickle
@@ -9,6 +11,15 @@ try:
     import ujson as json
 except Exception as e:
     import json
+
+sysstr = platform.system()
+abs_file = os.path.abspath(sys.argv[0])
+if sysstr == 'Windows':
+    seprator = "\\"
+    abs_dir = abs_file[:abs_file.rfind("\\")]
+else:
+    seprator = "/"
+    abs_dir = abs_file[:abs_file.rfind("/")]
 
 class Storage(object):
     def insert():
@@ -30,6 +41,8 @@ class LocalStorage(Storage):
     """docstring for LocalStorage"""
     def __init__(self, file_path = '.proxy_engine_local_storage.pkl'):
         super(Storage, self).__init__()
+        if file_path == '.proxy_engine_local_storage.pkl':
+            file_path = abs_dir + seprator + file_path
         self.file = file_path
         if not os.path.exists(self.file):
             pickle.dump(set(()),open(self.file,"wb"))
@@ -87,6 +100,8 @@ class JsonLocalStorage(Storage):
     """docstring for JsonLocalStorage"""
     def __init__(self, file_path = '.proxy_engine_local_storage.json'):
         super(Storage, self).__init__()
+        if file_path == '.proxy_engine_local_storage.json':
+            file_path = abs_dir + seprator + file_path
         self.file = file_path
         if not os.path.exists(self.file):
             with open(self.file, 'w') as f:

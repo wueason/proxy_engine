@@ -4,7 +4,10 @@ import logging
 import retrying
 from exceptions import EmptyListException, ListNotMatchException
 from proxy_atom import ProxyAtom
+from fake_useragent import UserAgent
+from settings import TEST_URI
 
+ua = UserAgent()
 logger = logging.getLogger(__name__)
 
 class Site(object):
@@ -15,7 +18,6 @@ class Site(object):
         self._ip_parttern = ip_parttern
         self._port_pattern = port_pattern
         self._page_total = page_total
-        self._headers = headers
         
     def parser(self, ip_list_raw, port_list_raw):
         return ip_list_raw, port_list_raw
@@ -24,7 +26,7 @@ class Site(object):
     def fetch_proxies(self, page_num = None):
         try:
             url = self._target_url.format(page=page_num) if page_num else self._target_url
-            text = self._get_content(url, self._headers)
+            text = self._get_content(url)
             ip_list_raw = self._ip_parttern.findall(text)
             port_list_raw = self._port_pattern.findall(text)
 
@@ -41,8 +43,8 @@ class Site(object):
         ip_list, port_list =self.parser(ip_list_raw, port_list_raw)
         return ProxyAtom(ip_list, port_list)
 
-    def _get_content(self, url, headers):
-        response = requests.get(url, timeout=5, headers=headers)
+    def _get_content(self, url):
+        response = requests.get(url, timeout=5, headers={'user-agent': ua.random})
         logger.info("response status code: {} {}".format(url, response.status_code))
         return response.text
 
@@ -55,13 +57,13 @@ class Site(object):
                     logger.info("item: ## {}".format(item))
 
     def _validate(self, proxy_raw):
-        check_url = 'https://www.baidu.com'
         try:
-            r=requests.get(check_url, proxies={'http': proxy_raw,
-                'https': proxy_raw}, headers=self._headers, timeout=5)
+            r=requests.get(TEST_URI, proxies={'http': proxy_raw,
+                'https': proxy_raw}, headers={'user-agent': ua.random}, timeout=5)
             logger.info("StatusCode: ## {} ## {}".format(proxy_raw, r.status_code))
             if r.status_code == 200:
                 return True
             return False
         except Exception as e:
+            pass
             logger.error("Error: ## {} ## {}".format(proxy_raw, e))
