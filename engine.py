@@ -39,8 +39,6 @@ else:
     abs_dir = abs_file[:abs_file.rfind("/")]
 
 storage = JsonLocalStorage()
-cf = configparser.ConfigParser()
-cf.read(abs_dir + seprator + 'config.ini')
 
 def validate():
     errors = {}
@@ -70,7 +68,7 @@ def collect():
     ip = re.compile(r'<td>(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})</td>', re.I)
     port = re.compile(r'<td>(\d{1,5})</td>', re.I)
 
-    site = Site(storage, url, ip, port, 1817, headers)
+    site = Site(storage, url, ip, port, 1817)
     while True:
         logger.info("Collecting...")
         try:

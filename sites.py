@@ -11,7 +11,7 @@ ua = UserAgent()
 logger = logging.getLogger(__name__)
 
 class Site(object):
-    def __init__(self, storage, target_url, ip_parttern, port_pattern, page_total = 5, headers = {}):
+    def __init__(self, storage, target_url, ip_parttern, port_pattern, page_total = 5):
         super(Site, self).__init__()
         self._storage = storage
         self._target_url = target_url
